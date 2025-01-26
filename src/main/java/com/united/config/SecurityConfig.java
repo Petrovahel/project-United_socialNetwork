@@ -15,21 +15,23 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Інші методи залишаються без змін
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService userService) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(httpForm -> httpForm
                         .loginPage("/login").permitAll()
+                        .failureHandler((request, response, exception) -> {
+                            request.getSession().setAttribute("error", "Invalid username or password!");
+                            response.sendRedirect("/login");
+                        })
                         .successHandler((request, response, authentication) -> {
                             boolean hasRole = authentication.getAuthorities().stream()
                                     .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().startsWith("ROLE_"));
 
                             String redirectUrl = hasRole
-                                    ? "/profile/" + authentication.getName()
-                                    : "/home";
+                                    ? "/home"
+                                    : "/profile/" + authentication.getName();
 
                             new DefaultRedirectStrategy().sendRedirect(request, response, redirectUrl);
                         })
@@ -39,7 +41,7 @@ public class SecurityConfig {
                         .logoutSuccessHandler((request, response, authentication) -> {
                             if (authentication != null) {
                                 String username = authentication.getName();
-                                userService.updateLastActiveDate(username); // Update last active date
+                                userService.updateLastActiveDate(username);
                             }
                             response.sendRedirect("/login?logout");
                         })
