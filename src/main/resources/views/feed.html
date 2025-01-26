@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Feed</title>
+    <style>
+        /* Стилі для кожного поста */
+        .post-container {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-container a {
+            color: #0275d8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .post-container a:hover {
+            text-decoration: underline;
+        }
+
+        .post-container p {
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .post-container .tagged-friends {
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+<div th:each="post : ${posts}">
+    <div class="post-container">
+        <p>
+            <a th:href="@{/profile/{nickname}(nickname=${post.userPosted.nickname})}">
+                <span th:text="${post.userPosted.nickname}"></span>'s Post
+            </a>
+        </p>
+        <p><span th:text="${post.message}"></span></p>
+        <p><span th:text="${#dates.format(post.datePosted, 'yyyy-MM-dd HH:mm')}"></span></p>
+        <span th:if="${not #lists.isEmpty(post.taggedUsers)}">Tagged friends: </span>
+        <span th:each="friend, iterStat : ${post.taggedUsers}"
+              th:text="${iterStat.index < post.taggedUsers.size() - 1 ? friend.nickname + ', ' : friend.nickname}">
+        </span>
+    </div>
+</div>
+
+</body>
+</html>

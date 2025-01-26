@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with [[${friend.nickname}]]</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            /*flex-direction: column-reverse; !* Нові повідомлення внизу *!*/
+            gap: 10px;
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column-reverse; /* Змінено на звичайний порядок */
+            gap: 10px;
+            overflow-y: auto;
+            max-height: 100%; /* Щоб повідомлення займали доступну висоту */
+        }
+
+
+        .message {
+            display: inline-block;
+            max-width: 60%;
+            padding: 10px;
+            border-radius: 10px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.from-me {
+            align-self: flex-end;
+            background-color: #d1f7c4;
+        }
+
+        .message.from-friend {
+            align-self: flex-start;
+            background-color: #f1f1f1;
+        }
+
+        footer {
+            padding: 10px;
+            background-color: #f9f9f9;
+            display: flex;
+        }
+
+        footer input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        footer button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        footer button:hover {
+            background-color: #0056b3;
+        }
+
+        #edit-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        #edit-modal textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        #edit-modal button {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        #edit-modal button.cancel {
+            background-color: #ccc;
+        }
+
+        #edit-modal button.save {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<header>
+    Chat with <span th:text="${friend.nickname}">Friend</span>
+</header>
+
+<main class="chat-messages">
+    <button id="delete-selected-btn" onclick="deleteSelectedMessages()" disabled>
+        Delete Selected
+    </button>
+
+    <div th:each="message : ${messages}"
+         th:classappend="${message.userFrom.id == authUser.id} ? 'message from-me' : 'message from-friend'"
+         class="message">
+        <input th:if="${message.userFrom.id == authUser.id}" type="checkbox"
+               class="select-message" th:attr="data-id=${message.id}" onclick="toggleDeleteButton()">
+        <p>
+            <span th:text="${message.text}"></span>
+            <span th:if="${message.dateSent != null}"
+                  th:text="' (Sent: ' + ${#dates.format(message.dateSent, 'dd-MM-yyyy HH:mm:ss')} + ')'"></span>
+            <span th:if="${message.dateEdited != null}"
+                  th:text="' (Edited: ' + ${#dates.format(message.dateEdited, 'dd-MM-yyyy HH:mm:ss')} + ')'"></span>
+        </p>
+
+        <div th:if="${message.userFrom.id == authUser.id}" class="message-options">
+            <button th:onclick="'deleteMessage(' + ${message.id} + ')'" class="delete-btn">Delete</button>
+            <button th:attr="data-id=${message.id}, data-text=${message.text}"
+                    onclick="editMessage(this)">
+                Edit
+            </button>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <form th:action="@{/saveMessage/{nickname}(nickname=${friend.nickname})}" method="post">
+        <input type="hidden" name="userFrom" th:value="${authUser.id}">
+        <input type="hidden" name="userTo" th:value="${friend.id}">
+        <input type="text" name="message" placeholder="Type a message" required>
+        <button type="submit">Send</button>
+    </form>
+</footer>
+
+<div id="edit-modal">
+    <textarea id="edit-text" placeholder="Edit your message..."></textarea>
+    <button class="cancel" onclick="closeEditModal()">Cancel</button>
+    <button class="save" onclick="saveEdit()">Save</button>
+</div>
+
+<script>
+    let currentMessageId = null;
+
+    function toggleDeleteButton() {
+        const checkboxes = document.querySelectorAll('.select-message');
+        const deleteButton = document.getElementById('delete-selected-btn');
+        const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        deleteButton.disabled = !anyChecked;
+    }
+
+    function deleteSelectedMessages() {
+        if (confirm('Are you sure?')) {
+            const selectedIds = Array.from(document.querySelectorAll('.select-message:checked'))
+                .map(cb => cb.getAttribute('data-id'));
+
+            fetch('/deleteMessages', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(selectedIds)
+            }).then(res => location.reload());
+        }
+    }
+
+    function deleteMessage(id) {
+        if (confirm('Delete this message?')) {
+            fetch(`/deleteMessage/${id}`, { method: 'DELETE' })
+                .then(res => location.reload());
+        }
+    }
+
+    function editMessage(button) {
+        const messageId = button.getAttribute('data-id');
+        const messageText = button.getAttribute('data-text');
+
+        currentMessageId = messageId;
+        document.getElementById('edit-text').value = messageText;
+        document.getElementById('edit-modal').style.display = 'block';
+    }
+
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').style.display = 'none';
+    }
+
+    function saveEdit() {
+        const newText = document.getElementById('edit-text').value;
+        fetch(`/editMessage/${currentMessageId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: newText })
+        }).then(res => location.reload());
+    }
+</script>
+</body>
+</html>

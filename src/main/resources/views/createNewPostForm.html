@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Створити новий пост</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+
+    form {
+      background-color: white;
+      padding: 20px;
+      margin: 20px auto;
+      width: 300px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #0275d8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #025aa5;
+    }
+  </style>
+</head>
+<body>
+
+<form id="post-form" action="/saveNewPost" method="POST">
+  <div>
+    <label for="message">Message</label>
+    <input type="text" id="message" name="message" placeholder="Type Your message" required maxlength="200">
+    <span id="error-message" style="color: red; display: none;">Message cannot contain links.</span>
+  </div>
+
+  <script>
+    const messageInput = document.getElementById('message');
+    const errorMessage = document.getElementById('error-message');
+
+    messageInput.addEventListener('input', function() {
+      const message = messageInput.value;
+      const urlPattern = /https?:\/\/[^\s]+/;
+
+      if (urlPattern.test(message)) {
+        errorMessage.style.display = 'inline';
+      } else {
+        errorMessage.style.display = 'none';
+      }
+    });
+  </script>
+
+
+
+  <div>
+    <label for="location">Location</label>
+    <input type="text" id="location" name="location" placeholder="Type your location" required>
+  </div>
+
+  <div>
+    <label for="tag-friends">Tag friends</label>
+    <select id="tag-friends" name="taggedFriends" multiple>
+      <option value="" disabled selected>Select friends (optional)</option>
+
+      <th:block th:each="friend : ${friends}">
+        <option th:value="${friend.id}" th:text="${friend.nickname}"></option>
+      </th:block>
+    </select>
+  </div>
+
+  <input type="hidden" id="nickname" name="nickname" th:value="${nickname}">
+
+  <button type="submit">Create new post</button>
+</form>
+
+
+</body>
+</html>

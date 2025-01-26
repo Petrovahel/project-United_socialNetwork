@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chats</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chats-container {
+            margin: 20px auto;
+            max-width: 600px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .chat-item:last-child {
+            border-bottom: none;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .delete-btn:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+<div class="chats-container">
+    <h2>Your Chats</h2>
+    <div th:each="corespondent : ${corespondents}" class="chat-item">
+        <a th:href="@{/chatPage/{nickname}(nickname=${corespondent.nickname})}"
+           th:text="${corespondent.nickname}"></a>
+        <div>
+            <!-- Pass the nickname using a data attribute and use it in JavaScript -->
+            <button class="delete-btn" th:data-nickname="${corespondent.nickname}" onclick="deleteChat(this)">
+                Delete chat
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+    function deleteChat(button) {
+        const nickname = button.getAttribute('data-nickname');  // Get the nickname from the data attribute
+        // Confirm deletion with the correct nickname
+        if (confirm('Are you sure you want to delete this chat with ' + nickname + '?')) {
+            fetch('/deleteChat/' + nickname, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Chat with ' + nickname + ' deleted successfully!');
+                        location.reload();  // Reload the page to reflect the change
+                    } else {
+                        alert('Failed to delete chat.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting chat:', error);
+                });
+        }
+    }
+
+</script>
+
+</body>
+</html>

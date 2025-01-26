@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Request sent</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const forms = document.querySelectorAll("form[data-ajax]");
+
+            forms.forEach(form => {
+                form.addEventListener("submit", async (event) => {
+                    event.preventDefault(); // Забороняємо стандартну відправку форми
+
+                    const url = form.action;
+                    const formData = new FormData(form);
+
+                    try {
+                        const response = await fetch(url, {
+                            method: form.method,
+                            body: formData
+                        });
+
+                        const result = await response.text();
+
+                        // Відображаємо попап із результатом
+                        showPopup(result, response.ok ? "success" : "error");
+
+                    } catch (error) {
+                        console.error("Error:", error);
+                        showPopup("An unexpected error occurred. Please try again.", "error");
+                    }
+                });
+            });
+        });
+
+        function showPopup(message, type) {
+            // Створюємо контейнер для попапа, якщо його ще немає
+            let popup = document.getElementById("popup");
+            if (!popup) {
+                popup = document.createElement("div");
+                popup.id = "popup";
+                document.body.appendChild(popup);
+            }
+
+            // Стилізація попапа
+            popup.style.position = "fixed";
+            popup.style.top = "50%";
+            popup.style.left = "50%";
+            popup.style.transform = "translate(-50%, -50%)";
+            popup.style.padding = "20px";
+            popup.style.backgroundColor = type === "success" ? "#d4edda" : "#f8d7da";
+            popup.style.border = "1px solid";
+            popup.style.borderColor = type === "success" ? "#c3e6cb" : "#f5c6cb";
+            popup.style.color = type === "success" ? "#155724" : "#721c24";
+            popup.style.borderRadius = "5px";
+            popup.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
+            popup.style.zIndex = "1000";
+
+            popup.textContent = message;
+
+            // Прибираємо попап через 3 секунди
+            setTimeout(() => {
+                popup.remove();
+            }, 3000);
+        }
+    </script>
+</head>
+<body>
+<h1>Your sent requests</h1>
+<div th:each="user : ${request}">
+  <p>
+    <a th:href="@{/profile/{nickname}(nickname=${user.nickname})}" th:text="${user.firstName} + ' ' + ${user.lastName}"></a>
+    <form th:action="@{/removeRequest/{friendId}(friendId=${user.id})}" method="post" data-ajax="true" style="display:inline;">
+      <button type="submit">Cancel request</button>
+    </form>
+    </p>
+</div>
+</body>
+</html>

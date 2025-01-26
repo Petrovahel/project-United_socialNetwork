@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit profile</title>
+</head>
+<body>
+<form th:action="@{/editProfile/{nickname}(nickname=${user.nickname})}"
+      th:object="${user}" method="post">
+  <div>
+    <label for="firstName">First Name:</label>
+    <input type="text" id="firstName" th:field="*{firstName}" required>
+  </div>
+  <div>
+    <label for="lastName">Last Name:</label>
+    <input type="text" id="lastName" th:field="*{lastName}" required>
+  </div>
+  <div>
+    <label for="religion">Religion:</label>
+    <input type="text" id="religion" th:field="*{religion}">
+  </div>
+  <div>
+    <label for="school">School:</label>
+    <input type="text" id="school" th:field="*{school}">
+  </div>
+  <div>
+    <label for="university">University:</label>
+    <input type="text" id="university" th:field="*{university}">
+  </div>
+  <div>
+    <label for="phone">Phone:</label>
+    <input type="text" id="phone" th:field="*{phone}">
+  </div>
+  <div>
+    <label for="country">Country:</label>
+    <input type="text" id="country" th:field="*{country}">
+  </div>
+  <div>
+    <label for="city">City:</label>
+    <input type="text" id="city" th:field="*{city}">
+  </div>
+  <div>
+    <label for="age">Age:</label>
+    <input type="number" id="age" th:field="*{age}">
+  </div>
+  <div>
+    <label for="relation_ship">Relationship Status:</label>
+    <select id="relation_ship" name="relation_ship">
+      <option value="SINGLE">Single</option>
+      <option value="MARRIED">Married</option>
+      <option value="DIVORCED">Divorced</option>
+      <option value="WIDOWED">Widowed</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Save</button>
+</form>
+</body>
+</html>
